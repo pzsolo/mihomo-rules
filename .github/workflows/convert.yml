@@ -16,99 +16,75 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v6
 
+      # ========== 1. 拉取远端规则写入本地txt ==========
       - name: 拉取远端 domain/ipcidr 规则
         run: |
           set -e
           mkdir -p rules/text
           
-          # 原始 raw 地址
-          RAW_DOMAIN="https://raw.githubusercontent.com/QuixoticHeart/rule-set/ruleset/ruleset/meta/domain/proxy.list"
-          RAW_IPCIDR="https://raw.githubusercontent.com/QuixoticHeart/rule-set/ruleset/ruleset/meta/ipcidr/proxy.list"
-          
-          # 镜像列表
-          MIRRORS=(
-            "https://mirror.ghproxy.com/"
-            "https://fastgit.cc/"
-            ""
-          )
+          # jsdelivr CDN 稳定源，规避ghproxy失效问题
+          RAW_DOMAIN="https://cdn.jsdelivr.net/gh/QuixoticHeart/rule-set@ruleset/ruleset/meta/domain/proxy.list"
+          RAW_IPCIDR="https://cdn.jsdelivr.net/gh/QuixoticHeart/rule-set@ruleset/ruleset/meta/ipcidr/proxy.list"
 
-          # 函数：通用下载逻辑
           download_rule() {
-            local raw_url=$1
-            local save_path=$2
-            local max_retry=3
-            echo "====================================="
-            echo "开始下载: $raw_url -> $save_path"
-            for ((i=1; i<=max_retry; i++)); do
-              echo "第 $i 次尝试下载..."
-              # 遍历镜像
-              for mirror in "${MIRRORS[@]}"; do
-                local dl_url="${mirror}${raw_url}"
-                echo "尝试地址: $dl_url"
-                # wget 下载，不静默，超时90秒
-                if wget --timeout=90 --tries=2 --show-progress "$dl_url" -O "$save_path.tmp"; then
-                  # 判断文件非空
-                  if [ -s "$save_path.tmp" ]; then
-                    mv "$save_path.tmp" "$save_path"
-                    echo "✅ 下载成功: $save_path"
-                    return 0
-                  else
-                    echo "⚠️ 文件为空，丢弃重试下一个镜像"
-                    rm -f "$save_path.tmp"
-                  fi
-                fi
-                sleep 2
-              done
-              echo "⚠️ 当前轮次所有镜像失败，等待3秒后重试"
+            local url=$1
+            local save=$2
+            local retry=3
+            for ((i=1; i<=retry; i++)); do
+              echo "第 $i 次下载 $url -> $save"
+              if curl -L --connect-timeout 90 "$url" -o "$save.tmp" && [ -s "$save.tmp" ]; then
+                mv "$save.tmp" "$save"
+                echo "✅ $save 更新完成"
+                return 0
+              fi
+              rm -f "$save.tmp"
               sleep 3
             done
-            # wget 全部失败，尝试 curl 兜底
-            echo "wget 全部失败，使用 curl 兜底下载"
-            for mirror in "${MIRRORS[@]}"; do
-              local dl_url="${mirror}${raw_url}"
-              echo "curl 尝试: $dl_url"
-              if curl -L --connect-timeout 90 "$dl_url" -o "$save_path.tmp"; then
-                if [ -s "$save_path.tmp" ]; then
-                  mv "$save_path.tmp" "$save_path"
-                  echo "✅ curl 下载成功: $save_path"
-                  return 0
-                fi
-                rm -f "$save_path.tmp"
-              fi
-              sleep 2
-            done
-            # 彻底失败处理
-            rm -f "$save_path.tmp"
-            echo "❌ $save_path 所有下载方式全部失败"
+            echo "❌ $save 下载失败"
             return 1
           }
 
-          # 下载 domain.txt
-          if ! download_rule "$RAW_DOMAIN" "rules/text/domain.txt"; then
-            echo "⚠️ domain 规则拉取失败，继续使用本地旧文件（如有）"
-          fi
+          # 下载两个规则文本
+          download_rule "$RAW_DOMAIN" "rules/text/domain.txt"
+          download_rule "$RAW_IPCIDR" "rules/text/ipcidr.txt"
 
-          # 下载 ipcidr.txt
-          if ! download_rule "$RAW_IPCIDR" "rules/text/ipcidr.txt"; then
-            echo "⚠️ ipcidr 规则拉取失败，继续使用本地旧文件（如有）"
-          fi
-
-          # 校验文件并打印信息
-          echo ""
-          echo "=== 本地规则文件列表 ==="
-          ls -lh rules/text/
-          # 校验文件是否存在，两个都不存在则终止
+          # 校验至少存在一个文件
           if [ ! -f rules/text/domain.txt ] && [ ! -f rules/text/ipcidr.txt ]; then
-            echo "❌ domain、ipcidr 规则均不存在，无法转换，终止任务"
+            echo "❌ 两个规则文件全部下载失败，终止任务"
             exit 1
           fi
-          
-      # 原有下载 Mihomo 步骤不变
+
+          ls -lh rules/text/
+
+      # ========== 2. 先提交推送更新后的 txt 文件（关键改动） ==========
+      - name: 提交并推送更新后的原始规则txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}
+
+          git add rules/text/
+          if git diff --cached --quiet; then
+            echo "✅ 远端规则无变化，跳过推送"
+          else
+            git commit -m "🤖 更新远端 domain/ipcidr 原始规则 $(date '+%Y-%m-%d %H:%M:%S')"
+            git pull --rebase origin main
+            git push origin main
+            echo "✅ 原始规则txt已推送至仓库，源码已更新"
+          fi
+
+      # ========== 3. 重新拉取最新代码，确保使用刚推送的txt进行转换 ==========
+      - name: 同步最新仓库代码
+        run: |
+          git pull origin main
+          ls -lh rules/text/
+
+      # ========== 4. 下载 Mihomo 转换工具 ==========
       - name: 下载 Mihomo
         run: |
-          # 设置超时和重试
           set -e
-          
           echo "📥 获取最新版本信息..."
           LATEST_VERSION=$(curl -sL --max-time 30 https://api.github.com/repos/MetaCubeX/mihomo/releases/latest | jq -r '.tag_name')
           
@@ -118,54 +94,41 @@ jobs:
           fi
           
           echo "✅ 版本: $LATEST_VERSION"
-          
-          # 构建下载 URL
           DOWNLOAD_URL="https://github.com/MetaCubeX/mihomo/releases/download/${LATEST_VERSION}/mihomo-linux-amd64-${LATEST_VERSION}.gz"
           echo "📦 下载地址: $DOWNLOAD_URL"
           
-          # 下载，设置超时和重试
           for i in {1..3}; do
             echo "⏳ 尝试下载 (第 $i 次)..."
-            if wget --timeout=60 --tries=3 -q --show-progress "$DOWNLOAD_URL"; then
+            if wget --timeout=60 --tries=3 --show-progress "$DOWNLOAD_URL"; then
               echo "✅ 下载成功"
               break
             else
               echo "⚠️ 下载失败，等待重试..."
               sleep 5
             fi
-            
             if [ $i -eq 3 ]; then
               echo "❌ 下载失败，尝试备用源..."
-              # 尝试使用 ghproxy 镜像
               MIRROR_URL="https://mirror.ghproxy.com/${DOWNLOAD_URL}"
-              wget --timeout=60 -q --show-progress "$MIRROR_URL"
+              wget --timeout=60 --show-progress "$MIRROR_URL"
             fi
           done
           
-          # 解压
-          echo "📂 解压文件..."
           gunzip "mihomo-linux-amd64-${LATEST_VERSION}.gz"
           mv "mihomo-linux-amd64-${LATEST_VERSION}" mihomo
           chmod +x mihomo
-          
-          # 验证（不启动服务）
-          echo "🔍 验证安装..."
           ./mihomo -v 2>/dev/null || echo "✅ mihomo 已就绪"
       
+      # ========== 5. 执行 MRS 转换 ==========
       - name: 创建输出目录
         run: |
           mkdir -p rules/mrs
       
       - name: 转换规则文件
         run: |
-          # 遍历所有文本规则文件并转换
           for txt_file in rules/text/*.txt; do
             if [ -f "$txt_file" ]; then
               filename=$(basename "$txt_file" .txt)
-              
               echo "正在转换: $filename"
-              
-              # 根据文件名判断规则类型
               case "$filename" in
                 domain|domain_suffix|domain_keyword)
                   behavior="domain"
@@ -177,14 +140,10 @@ jobs:
                   behavior="classical"
                   ;;
                 *)
-                  # 默认使用 domain
                   behavior="domain"
                   ;;
               esac
-              
-              # 执行转换
               ./mihomo convert-ruleset "$behavior" text "$txt_file" "rules/mrs/${filename}.mrs"
-              
               if [ $? -eq 0 ]; then
                 echo "✅ ${filename}.mrs 转换成功"
                 ls -lh "rules/mrs/${filename}.mrs"
@@ -194,6 +153,7 @@ jobs:
             fi
           done
       
+      # ========== 6. 生成mrs列表README ==========
       - name: 生成规则列表
         run: |
           echo "# 可用规则" > rules/mrs/README.md
@@ -210,6 +170,8 @@ jobs:
               echo "| $filename | $filesize | [下载](https://github.com/${{ github.repository }}/releases/latest/download/$filename) |" >> rules/mrs/README.md
             fi
           done
+
+      # ========== 7. 提交转换后的mrs产物 ==========
       - name: 设置 .gitignore
         run: |
           if [ ! -f .gitignore ]; then
@@ -221,53 +183,40 @@ jobs:
           fi
           cat .gitignore
       
-      - name: 提交转换结果
+      - name: 提交转换后的MRS结果
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # 设置认证
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}
-          # 清理临时文件
           rm -f mihomo
           
-          git add rules/text/ rules/mrs/
-          
-          # 检查是否有变更
+          git add rules/mrs/
           if git diff --cached --quiet; then
-            echo "✅ 没有文件变更，跳过提交"
+            echo "✅ MRS文件无变更，跳过提交"
             exit 0
           fi
           
-          # 提交变更
-          git commit -m "🤖 同步远端规则并自动转换 MRS [$(date '+%Y-%m-%d %H:%M:%S')]"
-                
-          # 拉取远程更新
-          echo "🔄 检查远程更新..."
+          git commit -m "🤖 转换MRS规则 $(date '+%Y-%m-%d %H:%M:%S')"
           git pull --rebase origin main
-          
-          # 推送更改
-          echo "📤 推送到远程仓库..."
           git push origin main
-          
-          echo "✅ 提交和推送完成"
+          echo "✅ MRS转换结果推送完成"
         
+      # ========== 8. 创建Release上传mrs文件 ==========
       - name: 创建 Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ github.run_number }}
           name: MRS Rules v${{ github.run_number }}
+          delete_tag: true
           body: |
-            🎉 自动同步远端规则并生成 MRS 规则集
+            🎉 同步远端原始规则并生成 MRS 规则集
             
             **生成时间**: ${{ github.event.head_commit.timestamp }}
             **提交信息**: ${{ github.event.head_commit.message }}
             
             ## 📥 使用方法
-            
-            在 mihomo 配置中添加：
-            
             ```yaml
             rule-providers:
               my-domain:
