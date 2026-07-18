@@ -40,7 +40,7 @@ jobs:
           echo "✅ 版本: $LATEST_VERSION"
           
           # 构建下载 URL
-          DOWNLOAD_URL="https://github.com/MetaCubeX/mihomo/releases/download/${LATEST_VERSION}/mihomo-linux-amd64-${LATEST_VERSION}.gz"
+          DOWNLOAD_URL="https://github.com/MetaCubeX/mihomo/releases/download/${LATEST_VERSION}/mihomo-linux-amd64-v2-${LATEST_VERSION}.gz"
           echo "📦 下载地址: $DOWNLOAD_URL"
           
           # 下载，设置超时和重试
