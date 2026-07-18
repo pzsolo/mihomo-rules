@@ -34,7 +34,7 @@ jobs:
           
           if [ -z "$LATEST_VERSION" ] || [ "$LATEST_VERSION" = "null" ]; then
             echo "❌ 无法获取版本信息，使用固定版本"
-            LATEST_VERSION="v1.18.10"
+            LATEST_VERSION="v1.19.16"
           fi
           
           echo "✅ 版本: $LATEST_VERSION"
