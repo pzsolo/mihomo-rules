@@ -1,14 +1,1 @@
-DOMAIN-SUFFIX,sourceforge.net,节点选择
-DOMAIN-SUFFIX,githubusercontent.com,节点选择
-DOMAIN-SUFFIX,anthropic.com,节点选择
-DOMAIN-SUFFIX,claude.com,节点选择
-DOMAIN-SUFFIX,openai.com,节点选择
-DOMAIN-SUFFIX,chatgpt.com,节点选择
-DOMAIN-SUFFIX,sourceforge.net,节点选择
-DOMAIN-SUFFIX,google.com,节点选择
-DOMAIN-SUFFIX,huggingface.co,节点选择
-DOMAIN-SUFFIX,gmail.com,节点选择
-DOMAIN-SUFFIX,youtube.com,节点选择
-DOMAIN-SUFFIX,twitter.com,节点选择
-DOMAIN-SUFFIX,civitai.com,节点选择
-DOMAIN-SUFFIX,pythonhosted.org,节点选择
+DOMAIN-SUFFIX,sourceforge.net
