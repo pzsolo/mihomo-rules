@@ -23,8 +23,8 @@ jobs:
           mkdir -p rules/text
           
           # jsdelivr CDN 稳定源，规避ghproxy失效问题
-          RAW_DOMAIN="https://cdn.jsdelivr.net/gh/QuixoticHeart/rule-set@ruleset/ruleset/meta/domain/proxy.list"
-          RAW_IPCIDR="https://cdn.jsdelivr.net/gh/QuixoticHeart/rule-set@ruleset/ruleset/meta/ipcidr/proxy.list"
+          RAW_DOMAIN="https://github.com/QuixoticHeart/rule-set/raw/refs/heads/ruleset/meta/proxy.list"
+          RAW_IPCIDR="https://github.com/QuixoticHeart/rule-set/raw/refs/heads/ruleset/meta/ipcidr/proxy.list"
 
           download_rule() {
             local url=$1
