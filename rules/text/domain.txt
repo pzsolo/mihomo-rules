@@ -1,2 +1,1 @@
-raw.githubusercontent.com
-+.sourceforge.net
+www.google.com
