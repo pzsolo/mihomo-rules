@@ -87,18 +87,15 @@ jobs:
               
               # 根据文件名判断规则类型
               case "$filename" in
-                domain|domain_suffix|domain_keyword)
-                  behavior="domain"
+                 ipcidr)
+                  behavior="classical"
                   ;;
-                ipcidr|ip_cidr|ipcidr6)
-                  behavior="ipcidr"
-                  ;;
-                classical|mixed)
+                classical)
                   behavior="classical"
                   ;;
                 *)
                   # 默认使用 domain
-                  behavior="domain"
+                  behavior="classical"
                   ;;
               esac
               
@@ -194,7 +191,7 @@ jobs:
             rule-providers:
               my-rules:
                 type: http
-                behavior: domain  # 根据实际类型修改
+                behavior: classical  # 根据实际类型修改
                 format: mrs
                 url: "https://github.com/${{ github.repository }}/releases/latest/download/domain.mrs"
                 interval: 86400
