@@ -1,6 +1,3 @@
-# 进程分流
-PROCESS,Steam.exe
-PROCESS,doubao
 #匹配域名关键词
 DOMAIN-KEYWORD,whatsapp
 DOMAIN-KEYWORD,google
@@ -10,10 +7,7 @@ DOMAIN-KEYWORD,chatgpt
 #匹配完整域名：
 DOMAIN,sourceforge.net
 DOMAIN,raw.githubusercontent.com
-#DOMAIN,ltx.io
-#DOMAIN,us.aws.cdn.hf.co
 #匹配域名后缀，只要域名以指定字符串结尾，就命中这条规则。
-#DOMAIN-SUFFIX,vimeo.com
 DOMAIN-SUFFIX,anthropic.com
 DOMAIN-SUFFIX,claude.com
 DOMAIN-SUFFIX,openai.com

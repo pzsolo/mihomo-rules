@@ -1,0 +1,66 @@
+name: Build All MRS From Text Folder
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths:
+      - text/**/*.txt
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. 拉取仓库完整代码
+      - name: Checkout Repo
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      # 2. 创建输出 mrs 目录
+      - name: Make mrs dir
+        run: mkdir -p mrs
+
+      # 3. 下载 mihomo 内核
+      - name: Download mihomo core
+        run: |
+          mihomo_version=$(curl -fsSL https://github.com/MetaCubeX/mihomo/releases/download/Prerelease-Alpha/version.txt)
+          wget "https://github.com/MetaCubeX/mihomo/releases/download/Prerelease-Alpha/mihomo-linux-amd64-v3-${mihomo_version}.gz" -O - | gzip -d > ./mihomo
+          chmod +x ./mihomo
+
+      # 4. 批量循环转换 text/*.txt → mrs/*.mrs
+      - name: Batch convert txt to mrs
+        run: |
+          for txt_file in text/*.txt; do
+            # 获取纯文件名（不带路径、后缀）
+            filename=$(basename "$txt_file" .txt)
+            output="mrs/${filename}.mrs"
+
+            # 文件名含 ip 判定为 IP-CIDR 规则，其余为 domain 域名规则
+            if [[ "$filename" == *ip* ]]; then
+              ./mihomo convert-ruleset ipcidr text "$txt_file" "$output"
+            else
+              ./mihomo convert-ruleset domain text "$txt_file" "$output"
+            fi
+          done
+
+      # 5. 上传所有生成的 mrs 工件
+      - name: Upload mrs artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: all-mrs-rules
+          path: mrs/
+
+      # 6. Git 提交推送 mrs 目录全部文件
+      - name: Git Push Generated MRS
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add mrs/
+          # 无变更直接跳过
+          if git diff --staged --quiet; then
+            echo "No mrs file changes, skip commit & push"
+          else
+            git commit -m "Auto batch generate mrs from text folder txt files"
+            git push
+          fi
