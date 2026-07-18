@@ -1,8 +1,3 @@
-DOMAIN-KEYWORD,whatsapp
-DOMAIN-KEYWORD,google
-DOMAIN-KEYWORD,github
-DOMAIN-KEYWORD,openai
-DOMAIN-KEYWORD,chatgpt
 DOMAIN,sourceforge.net
 DOMAIN,raw.githubusercontent.com
 DOMAIN-SUFFIX,anthropic.com
