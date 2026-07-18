@@ -1,0 +1,7 @@
+whatsapp
+google
+github
+openai
+chatgpt
+gemini
+grok

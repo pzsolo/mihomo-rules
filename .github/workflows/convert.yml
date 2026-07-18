@@ -98,7 +98,7 @@ jobs:
                   ;;
                 *)
                   # 默认使用 domain
-                  behavior="classical"
+                  behavior="domain"
                   ;;
               esac
               
