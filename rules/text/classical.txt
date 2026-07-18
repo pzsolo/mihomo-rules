@@ -1,16 +1,10 @@
-#匹配域名关键词
 DOMAIN-KEYWORD,whatsapp
 DOMAIN-KEYWORD,google
 DOMAIN-KEYWORD,github
 DOMAIN-KEYWORD,openai
 DOMAIN-KEYWORD,chatgpt
-#匹配完整域名：
 DOMAIN,sourceforge.net
 DOMAIN,raw.githubusercontent.com
-#DOMAIN,ltx.io
-#DOMAIN,us.aws.cdn.hf.co
-#匹配域名后缀，只要域名以指定字符串结尾，就命中这条规则。
-#DOMAIN-SUFFIX,vimeo.com
 DOMAIN-SUFFIX,anthropic.com
 DOMAIN-SUFFIX,claude.com
 DOMAIN-SUFFIX,openai.com
@@ -52,8 +46,6 @@ DOMAIN-SUFFIX,rawgit.com
 DOMAIN-SUFFIX,rawgithub.com
 DOMAIN-SUFFIX,repo.new
 DOMAIN-SUFFIX,thegithubshop.com
-
- # Google AI / Core
 DOMAIN-SUFFIX,ai.google.dev
 DOMAIN-SUFFIX,ai.studio
 DOMAIN-SUFFIX,aistudio.google.com
@@ -68,8 +60,6 @@ DOMAIN-SUFFIX,generativeai.google
 DOMAIN-SUFFIX,generativelanguage.googleapis.com
 DOMAIN-SUFFIX,notebooklm.google
 DOMAIN-SUFFIX,notebooklm.google.com
-
- # Google AI / Third-Party
 DOMAIN,alkalicore-pa.clients6.google.com
 DOMAIN,alkalimakersuite-pa.clients6.google.com
 DOMAIN,antigravity-pa.googleapis.com
