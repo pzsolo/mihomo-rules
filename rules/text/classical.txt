@@ -1,1 +1,1 @@
-DOMAIN-SUFFIX,sourceforge.net,PROXY
+sourceforge.net
