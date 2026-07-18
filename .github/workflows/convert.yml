@@ -16,51 +16,93 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v6
 
-      # ========== 新增：拉取远端规则写入本地txt ==========
       - name: 拉取远端 domain/ipcidr 规则
         run: |
           set -e
           mkdir -p rules/text
           
-          # 远端 raw 地址
-          DOMAIN_RAW="https://raw.githubusercontent.com/QuixoticHeart/rule-set/ruleset/ruleset/meta/domain/proxy.list"
-          IPCIDR_RAW="https://raw.githubusercontent.com/QuixoticHeart/rule-set/ruleset/ruleset/meta/ipcidr/proxy.list"
+          # 原始 raw 地址
+          RAW_DOMAIN="https://raw.githubusercontent.com/QuixoticHeart/rule-set/ruleset/ruleset/meta/domain/proxy.list"
+          RAW_IPCIDR="https://raw.githubusercontent.com/QuixoticHeart/rule-set/ruleset/ruleset/meta/ipcidr/proxy.list"
           
-          # 下载 domain 规则到 domain.txt
-          echo "📥 下载 domain 规则..."
-          for i in {1..3}; do
-            if wget --timeout=60 --tries=3 -q "$DOMAIN_RAW" -O rules/text/domain.txt; then
-              echo "✅ domain.txt 下载完成"
-              break
-            else
-              echo "⚠️ domain 下载失败，重试第 $i 次"
+          # 镜像列表
+          MIRRORS=(
+            "https://mirror.ghproxy.com/"
+            "https://fastgit.cc/"
+            ""
+          )
+
+          # 函数：通用下载逻辑
+          download_rule() {
+            local raw_url=$1
+            local save_path=$2
+            local max_retry=3
+            echo "====================================="
+            echo "开始下载: $raw_url -> $save_path"
+            for ((i=1; i<=max_retry; i++)); do
+              echo "第 $i 次尝试下载..."
+              # 遍历镜像
+              for mirror in "${MIRRORS[@]}"; do
+                local dl_url="${mirror}${raw_url}"
+                echo "尝试地址: $dl_url"
+                # wget 下载，不静默，超时90秒
+                if wget --timeout=90 --tries=2 --show-progress "$dl_url" -O "$save_path.tmp"; then
+                  # 判断文件非空
+                  if [ -s "$save_path.tmp" ]; then
+                    mv "$save_path.tmp" "$save_path"
+                    echo "✅ 下载成功: $save_path"
+                    return 0
+                  else
+                    echo "⚠️ 文件为空，丢弃重试下一个镜像"
+                    rm -f "$save_path.tmp"
+                  fi
+                fi
+                sleep 2
+              done
+              echo "⚠️ 当前轮次所有镜像失败，等待3秒后重试"
               sleep 3
-            fi
-            if [ $i -eq 3 ]; then
-              echo "❌ domain 规则下载多次失败，终止流程"
-              exit 1
-            fi
-          done
-          
-          # 下载 ipcidr 规则到 ipcidr.txt
-          echo "📥 下载 ipcidr 规则..."
-          for i in {1..3}; do
-            if wget --timeout=60 --tries=3 -q "$IPCIDR_RAW" -O rules/text/ipcidr.txt; then
-              echo "✅ ipcidr.txt 下载完成"
-              break
-            else
-              echo "⚠️ ipcidr 下载失败，重试第 $i 次"
-              sleep 3
-            fi
-            if [ $i -eq 3 ]; then
-              echo "❌ ipcidr 规则下载多次失败，终止流程"
-              exit 1
-            fi
-          done
-          
-          # 打印文件大小校验
+            done
+            # wget 全部失败，尝试 curl 兜底
+            echo "wget 全部失败，使用 curl 兜底下载"
+            for mirror in "${MIRRORS[@]}"; do
+              local dl_url="${mirror}${raw_url}"
+              echo "curl 尝试: $dl_url"
+              if curl -L --connect-timeout 90 "$dl_url" -o "$save_path.tmp"; then
+                if [ -s "$save_path.tmp" ]; then
+                  mv "$save_path.tmp" "$save_path"
+                  echo "✅ curl 下载成功: $save_path"
+                  return 0
+                fi
+                rm -f "$save_path.tmp"
+              fi
+              sleep 2
+            done
+            # 彻底失败处理
+            rm -f "$save_path.tmp"
+            echo "❌ $save_path 所有下载方式全部失败"
+            return 1
+          }
+
+          # 下载 domain.txt
+          if ! download_rule "$RAW_DOMAIN" "rules/text/domain.txt"; then
+            echo "⚠️ domain 规则拉取失败，继续使用本地旧文件（如有）"
+          fi
+
+          # 下载 ipcidr.txt
+          if ! download_rule "$RAW_IPCIDR" "rules/text/ipcidr.txt"; then
+            echo "⚠️ ipcidr 规则拉取失败，继续使用本地旧文件（如有）"
+          fi
+
+          # 校验文件并打印信息
+          echo ""
+          echo "=== 本地规则文件列表 ==="
           ls -lh rules/text/
-      
+          # 校验文件是否存在，两个都不存在则终止
+          if [ ! -f rules/text/domain.txt ] && [ ! -f rules/text/ipcidr.txt ]; then
+            echo "❌ domain、ipcidr 规则均不存在，无法转换，终止任务"
+            exit 1
+          fi
+          
       # 原有下载 Mihomo 步骤不变
       - name: 下载 Mihomo
         run: |
