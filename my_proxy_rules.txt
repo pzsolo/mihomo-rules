@@ -55,7 +55,7 @@ DOMAIN-SUFFIX,rawgit.com
 DOMAIN-SUFFIX,rawgithub.com
 DOMAIN-SUFFIX,repo.new
 DOMAIN-SUFFIX,thegithubshop.com
- # Google AI / Core
+# Google AI / Core
 DOMAIN-SUFFIX,ai.google.dev
 DOMAIN-SUFFIX,ai.studio
 DOMAIN-SUFFIX,aistudio.google.com
@@ -70,7 +70,7 @@ DOMAIN-SUFFIX,generativeai.google
 DOMAIN-SUFFIX,generativelanguage.googleapis.com
 DOMAIN-SUFFIX,notebooklm.google
 DOMAIN-SUFFIX,notebooklm.google.com
- # Google AI / Third-Party
+# Google AI / Third-Party
 DOMAIN,alkalicore-pa.clients6.google.com
 DOMAIN,alkalimakersuite-pa.clients6.google.com
 DOMAIN,antigravity-pa.googleapis.com
