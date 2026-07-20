@@ -1,0 +1,4 @@
++.microsoft.com
++.bing.com
++.hf.co
++.windows.com
