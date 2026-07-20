@@ -87,10 +87,10 @@ jobs:
               
               # 根据文件名判断规则类型
               case "$filename" in
-                domain|domain_suffix|domain_keyword)
+                domain|domain_suffix|domain_keyword|direct_domain)
                   behavior="domain"
                   ;;
-                ipcidr|ip_cidr|ipcidr6)
+                ipcidr|ip_cidr|ipcidr6|direct_ip)
                   behavior="ipcidr"
                   ;;
                 classical|mixed)
