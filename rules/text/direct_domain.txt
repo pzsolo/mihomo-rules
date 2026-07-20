@@ -2,3 +2,4 @@
 +.bing.com
 +.hf.co
 +.windows.com
++.ubuntu.com
