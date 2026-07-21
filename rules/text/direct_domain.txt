@@ -5,3 +5,4 @@
 +.ubuntu.com
 +.msn.com
 +.live.com
++.logitech.io
