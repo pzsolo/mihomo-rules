@@ -6,3 +6,4 @@
 +.msn.com
 +.live.com
 +.logitech.io
++.office.com
