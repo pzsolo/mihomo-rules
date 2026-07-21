@@ -3,3 +3,4 @@
 +.hf.co
 +.windows.com
 +.ubuntu.com
++.msn.com
