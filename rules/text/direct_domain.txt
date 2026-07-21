@@ -4,3 +4,4 @@
 +.windows.com
 +.ubuntu.com
 +.msn.com
++.live.com
