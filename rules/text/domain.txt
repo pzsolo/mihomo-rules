@@ -1,3 +1,4 @@
 +.google.com
 +.googletagmanager.com
 +.worldmonitor.app
++.spotify.com
