@@ -7,3 +7,4 @@
 +.live.com
 +.logitech.io
 +.office.com
++.pytorch.org
